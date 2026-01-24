@@ -76,3 +76,8 @@ To redeploy:
 ```bash
 npm run deploy
 ```
+
+## PWA (Progressive Web App)
+This app is PWA-ready. You can install it on your device:
+- **iOS (Safari)**: Share button -> "Add to Home Screen"
+- **Android (Chrome)**: Menu -> "Install app" or "Add to Home screen"
