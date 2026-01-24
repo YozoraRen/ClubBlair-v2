@@ -1,0 +1,22 @@
+{
+  "name": "webapp",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "deploy": "npm run build && wrangler pages deploy dist",
+    "preview": "wrangler pages dev dist",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+  },
+  "dependencies": {
+    "hono": "^4.6.14"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241224.0",
+    "@hono/vite-cloudflare-pages": "^0.4.2",
+    "vite": "^5.4.11",
+    "wrangler": "^3.99.0",
+    "typescript": "^5.7.2",
+    "@types/node": "^20.11.17"
+  }
+}

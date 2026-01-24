@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClubBlair</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="glass-panel">
+            <h1>ClubBlair</h1>
+            <button id="btn-settings" class="icon-btn" title="設定" style="display: none;">
+                <i class="ph ph-gear-six" style="font-size: 24px;"></i>
+            </button>
+        </header>
+
+        <!-- Views -->
+        <main>
+            <!-- View: Home (Top Page) -->
+            <section id="view-home" class="view-section active">
+                <div class="dashboard-grid">
+                    <button class="dash-card" onclick="navigateTo('view-input')">
+                        <div class="dash-icon-bg color-1">
+                            <i class="ph ph-pencil-simple-line"></i>
+                        </div>
+                        <span>伝票入力</span>
+                    </button>
+                    <button class="dash-card" onclick="navigateTo('view-data', 'sales')">
+                        <div class="dash-icon-bg color-2">
+                            <i class="ph ph-chart-line-up"></i>
+                        </div>
+                        <span>売上確認</span>
+                    </button>
+                    <button class="dash-card" onclick="navigateTo('view-data', 'history')">
+                        <div class="dash-icon-bg color-3">
+                            <i class="ph ph-list-dashes"></i>
+                        </div>
+                        <span>履歴確認</span>
+                    </button>
+                    <button class="dash-card" onclick="navigateTo('view-settings')">
+                        <div class="dash-icon-bg color-4">
+                            <i class="ph ph-gear"></i>
+                        </div>
+                        <span>設定</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- View: Input -->
+            <section id="view-input" class="view-section" style="display: none;">
+                <div class="glass-panel animate-in">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center;">
+                            <button class="btn-back" onclick="navigateTo('view-home')">
+                                <i class="ph ph-caret-left"></i> 戻る
+                            </button>
+                            <h2 style="margin-left: 8px; font-size: 1.2rem;">伝票入力</h2>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="file" id="file-input" accept="image/*" style="display: none;">
+                            <button type="button" class="btn-upload" id="upload-btn" title="画像をアップロード">
+                                <i class="ph ph-upload-simple" style="font-size: 20px;"></i>
+                            </button>
+                            <button type="button" class="btn-camera" id="camera-btn" title="伝票を撮影">
+                                <i class="ph ph-camera" style="font-size: 20px;"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Camera Modal -->
+                    <div id="camera-modal" class="modal hidden">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3>伝票を撮影</h3>
+                                <button class="btn-close" id="close-camera">
+                                    <i class="ph ph-x" style="font-size: 24px;"></i>
+                                </button>
+                            </div>
+                            <div class="camera-container">
+                                <video id="camera-video" autoplay playsinline></video>
+                                <canvas id="camera-canvas" style="display: none;"></canvas>
+                                <div id="preview-container" class="hidden">
+                                    <img id="preview-image" alt="撮影画像">
+                                </div>
+                                <div id="ocr-loading" class="ocr-loading hidden">
+                                    <div class="loading-spinner"></div>
+                                    <p>AIが伝票を解析中...</p>
+                                </div>
+                            </div>
+                            <div class="camera-controls">
+                                <button type="button" class="btn-secondary" id="retake-btn" style="display: none;">
+                                    <i class="ph ph-arrow-counter-clockwise"></i>
+                                    <span>撮り直す</span>
+                                </button>
+                                <button type="button" class="btn-primary" id="capture-btn">
+                                    <i class="ph ph-camera"></i>
+                                    <span>撮影</span>
+                                </button>
+                                <button type="button" class="btn-primary" id="analyze-btn" style="display: none;">
+                                    <i class="ph ph-sparkle"></i>
+                                    <span>解析する</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="slip-form">
+                        <input type="hidden" id="entry-id">
+
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label for="date">日付</label>
+                                <input type="date" id="date" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="name1">キャスト①</label>
+                                <select id="name1" class="cast-select">
+                                    <option value="">選択してください</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="name2">キャスト②</label>
+                                <select id="name2" class="cast-select">
+                                    <option value="">選択してください</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="name3">キャスト③</label>
+                                <select id="name3" class="cast-select">
+                                    <option value="">選択してください</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="total">合計金額 (¥)</label>
+                                <input type="number" id="total" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="set-info">セット</label>
+                                <input type="text" id="set-info">
+                            </div>
+                            <div class="form-group">
+                                <label for="mine-ice">ミネ・アイス</label>
+                                <input type="text" id="mine-ice">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary" id="submit-btn">
+                            <span class="btn-text">送信する</span>
+                            <i class="ph ph-paper-plane-right" style="font-size: 18px;"></i>
+                        </button>
+                        <button type="button" class="btn-secondary hidden" id="cancel-edit-btn"
+                            style="width: 100%; margin-top: 8px;">
+                            編集をキャンセル
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Today's Entries Section -->
+                <div class="glass-panel" id="today-entries-section" style="margin-top: 16px; display: none;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-color); margin: 0;">本日の入力</h3>
+                        <span id="today-count" style="font-size: 0.85rem; color: var(--text-light);"></span>
+                    </div>
+                    <div id="today-entries-list" class="data-list">
+                        <!-- Today's entries will be injected here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Sales & History (Shared Container, toggled logic) -->
+            <section id="view-data" class="view-section" style="display: none;">
+                <div class="glass-panel">
+                    <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                        <button class="btn-back" onclick="navigateTo('view-home')">
+                            <i class="ph ph-caret-left"></i> 戻る
+                        </button>
+                    </div>
+
+                    <div class="data-view-header">
+                        <div class="data-view-title-row">
+                            <h2 id="data-view-title">履歴</h2>
+                            <button class="btn-refresh" id="refresh-btn" title="更新">
+                                <i class="ph ph-arrows-clockwise" style="font-size: 18px;"></i>
+                                <span>更新</span>
+                            </button>
+                        </div>
+                        <div class="filter-row">
+                            <input type="date" id="filter-start" placeholder="開始日">
+                            <span>~</span>
+                            <input type="date" id="filter-end" placeholder="終了日">
+                        </div>
+                        <div id="filtered-total-container" class="filtered-sum-box hidden">
+                            <span class="label">期間合計</span>
+                            <span class="value" id="filtered-total-amount">¥0</span>
+                        </div>
+                    </div>
+                    <div id="data-list" class="data-list">
+                        <!-- Data Items will be injected here -->
+                        <div class="empty-state">
+                            データを読み込み中...
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Settings -->
+            <section id="view-settings" class="view-section" style="display: none;">
+                <div class="glass-panel">
+                    <!-- Header -->
+                    <div class="settings-header">
+                        <button class="btn-back" onclick="navigateTo('view-home')">
+                            <i class="ph ph-caret-left"></i> 戻る
+                        </button>
+                        <h2 class="settings-title">設定</h2>
+                    </div>
+
+                    <!-- Cast Management Card -->
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <i class="ph ph-users-three"></i>
+                            <h3>キャスト管理</h3>
+                        </div>
+
+                        <!-- Add New Cast -->
+                        <div class="settings-card-body">
+                            <div class="add-cast-section">
+                                <label for="new-cast-name">新しいキャストを追加</label>
+                                <div class="add-cast-input-group">
+                                    <input type="text" id="new-cast-name" placeholder="キャスト名を入力">
+                                    <button id="add-cast-btn" class="btn-add-cast">
+                                        <i class="ph ph-plus-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Cast List -->
+                            <div class="cast-list-section">
+                                <div class="cast-list-header">
+                                    <span class="cast-count">登録済みキャスト</span>
+                                </div>
+                                <div id="settings-cast-list" class="cast-list">
+                                    <div class="empty-state">読み込み中...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-target="view-home" id="nav-home">
+                <i class="ph ph-house"></i>
+                <span>ホーム</span>
+            </button>
+            <button class="nav-item" data-target="view-input" id="nav-input">
+                <i class="ph ph-pencil-simple-line"></i>
+                <span>伝票入力</span>
+            </button>
+            <button class="nav-item" data-target="view-data" data-mode="sales" id="nav-sales">
+                <i class="ph ph-chart-line-up"></i>
+                <span>売上確認</span>
+            </button>
+            <button class="nav-item" data-target="view-data" data-mode="history" id="nav-history">
+                <i class="ph ph-list-dashes"></i>
+                <span>履歴確認</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- View: Settings -->
+    <section id="view-settings" class="view-section" style="display: none;">
+        <div class="glass-panel">
+            <!-- Header -->
+            <div class="settings-header">
+                <button class="btn-back" onclick="navigateTo('view-home')">
+                    <i class="ph ph-caret-left"></i> 戻る
+                </button>
+                <h2 class="settings-title">設定</h2>
+            </div>
+
+            <!-- Cast Management Card -->
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <i class="ph ph-users-three"></i>
+                    <h3>キャスト管理</h3>
+                </div>
+
+                <!-- Add New Cast -->
+                <div class="settings-card-body">
+                    <div class="add-cast-section">
+                        <label for="new-cast-name">新しいキャストを追加</label>
+                        <div class="add-cast-input-group">
+                            <input type="text" id="new-cast-name" placeholder="キャスト名を入力">
+                            <button id="add-cast-btn" class="btn-add-cast">
+                                <i class="ph ph-plus-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Cast List -->
+                    <div class="cast-list-section">
+                        <div class="cast-list-header">
+                            <span class="cast-count">登録済みキャスト</span>
+                        </div>
+                        <div id="settings-cast-list" class="cast-list">
+                            <div class="empty-state">読み込み中...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="script.js"></script>
+    <script src="ocr.js"></script>
+</body>
+
+</html>
