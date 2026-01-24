@@ -61,7 +61,7 @@ Googleスプレッドシートと連携し、キャスト一覧をシートで�
 This application has been ported to Cloudflare Pages.
 
 ### URL
-- **Production**: https://webapp-6fy.pages.dev
+- **Production**: https://club-blair.pages.dev
 
 ### Deployment Steps
 1. The project uses Hono + Vite for the build process.
