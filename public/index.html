@@ -10,7 +10,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ClubBlair">
-    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="apple-touch-icon" href="/static/logo.png">
+    <link rel="icon" href="/static/logo.png" type="image/png">
     <link rel="stylesheet" href="style.css">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,7 +26,10 @@
     <div class="app-container">
         <!-- Header -->
         <header class="glass-panel">
-            <h1>ClubBlair</h1>
+            <div style="display: flex; align-items: center; justify-content: center; width: 100%;">
+                <img src="/static/logo.png" alt="Logo" style="height: 40px; margin-right: 10px;">
+                <h1>ClubBlair</h1>
+            </div>
             <button id="btn-settings" class="icon-btn" title="設定" style="display: none;">
                 <i class="ph ph-gear-six" style="font-size: 24px;"></i>
             </button>
