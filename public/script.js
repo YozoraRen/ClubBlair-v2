@@ -465,7 +465,9 @@ async function fetchData() {
     renderLoading();
 
     try {
-        const response = await fetch(gasUrl);
+        // Cache busting: Add timestamp to URL to prevent caching of GET requests
+        const fetchUrl = gasUrl + (gasUrl.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+        const response = await fetch(fetchUrl);
         const json = await response.json();
 
         if (json.status === 'success') {
