@@ -263,12 +263,18 @@ function setupEventListeners() {
     }
 
     // Refresh
-    document.getElementById('refresh-btn').addEventListener('click', fetchData);
+    const refreshBtn = document.getElementById('refresh-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', fetchData);
+    }
     
     // Refresh TimeCard History
     const refreshTimeCardBtn = document.getElementById('refresh-timecard-btn');
     if (refreshTimeCardBtn) {
-        refreshTimeCardBtn.addEventListener('click', fetchData);
+        refreshTimeCardBtn.addEventListener('click', () => {
+            renderLoading(); // Show loading explicitly
+            fetchData();
+        });
     }
 
     // Filter
