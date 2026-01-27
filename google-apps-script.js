@@ -49,8 +49,14 @@ function setup() {
     let timeCardSheet = doc.getSheetByName(TIMECARD_SHEET_NAME);
     if (!timeCardSheet) {
         timeCardSheet = doc.insertSheet(TIMECARD_SHEET_NAME);
-        timeCardSheet.appendRow(['日時', '名前', '種別', '同伴', '打刻時間', 'raw_type']);
+        timeCardSheet.appendRow(['日時', '名前', '種別', '同伴', '打刻時間', 'raw_type', 'ID']);
         timeCardSheet.setFrozenRows(1);
+    } else {
+        // ID列(G列/Index 7)が存在するか確認し、なければヘッダーを追加
+        const lastCol = timeCardSheet.getLastColumn();
+        if (lastCol < 7) {
+            timeCardSheet.getRange(1, 7).setValue('ID');
+        }
     }
 }
 
@@ -141,24 +147,39 @@ function getTimeCardLogs() {
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) return [];
 
-    // Read all logs
-    // Columns: 日時, 名前, 種別, 同伴, 打刻時間, raw_type
-    const values = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
+    // Check if ID column exists and fill missing IDs
+    const lastCol = sheet.getLastColumn();
+    // G列(7)までデータを取得
+    // データ範囲: 行2～LastRow, 列1～7(G)
+    // 既存データがF列までしかない場合、G列の値は空になるはず
+    const dataRange = sheet.getRange(2, 1, lastRow - 1, 7);
+    const values = dataRange.getValues();
+    let isUpdated = false;
     
-    return values.map(row => {
+    const logs = values.map((row, index) => {
         // 日時 (row[0]) を文字列にフォーマット
         let dateStr = row[0];
         if (row[0] instanceof Date) {
             dateStr = Utilities.formatDate(row[0], 'Asia/Tokyo', 'yyyy-MM-dd HH:mm:ss');
         }
 
-        // 打刻時間 (row[4]) も必要ならフォーマット（今回はメインの日時を使うため補助的）
+        // 打刻時間 (row[4]) も必要ならフォーマット
         let timeStr = row[4];
         if (row[4] instanceof Date) {
             timeStr = Utilities.formatDate(row[4], 'Asia/Tokyo', 'HH:mm');
         }
 
+        // ID (row[6]) のチェックと生成
+        let id = row[6];
+        if (!id) {
+            id = Utilities.getUuid();
+            // 配列内の値を更新 (後でまとめて書き込むため)
+            values[index][6] = id;
+            isUpdated = true;
+        }
+
         return {
+            id: id, // ID for update/delete
             date: dateStr, // "yyyy-MM-dd HH:mm:ss"
             name: row[1],
             type_label: row[2],
@@ -166,7 +187,16 @@ function getTimeCardLogs() {
             time: timeStr,
             type: row[5]
         };
-    }).reverse(); // 新しい順
+    });
+
+    // IDを補完した場合、シートに書き戻す
+    if (isUpdated) {
+        // 全データを書き戻すと日付フォーマットが変わる恐れがあるため、ID列(G列)のみ書き戻す
+        const ids = values.map(r => [r[6]]);
+        sheet.getRange(2, 7, ids.length, 1).setValues(ids);
+    }
+
+    return logs.reverse(); // 新しい順
 }
 
 /**
@@ -198,6 +228,10 @@ function doPost(e) {
             return manageCast(payload.sub_action, payload.name);
         } else if (action === 'timecard') { // 追加: タイムカード処理
             return recordTimeCard(payload);
+        } else if (action === 'update_timecard') { // 追加: タイムカード更新
+            return updateTimeCard(payload.id, payload.data);
+        } else if (action === 'delete_timecard') { // 追加: タイムカード削除
+            return deleteTimeCard(payload.id);
         } else {
             throw new Error('Invalid action: ' + action);
         }
@@ -214,12 +248,19 @@ function recordTimeCard(json) {
     if (!sheet) {
         // もしシートがなければ作成
         sheet = doc.insertSheet(TIMECARD_SHEET_NAME);
-        sheet.appendRow(['日時', '名前', '種別', '同伴', '打刻時間', 'raw_type']);
+        sheet.appendRow(['日時', '名前', '種別', '同伴', '打刻時間', 'raw_type', 'ID']);
+    } else {
+        // ヘッダー確認
+        const lastCol = sheet.getLastColumn();
+        if (lastCol < 7) {
+            sheet.getRange(1, 7).setValue('ID');
+        }
     }
 
     const timestamp = new Date();
     const dateStr = Utilities.formatDate(timestamp, 'Asia/Tokyo', 'yyyy/MM/dd HH:mm:ss');
     const timeStr = Utilities.formatDate(timestamp, 'Asia/Tokyo', 'HH:mm');
+    const id = Utilities.getUuid(); // ID生成
     
     sheet.appendRow([
         dateStr,
@@ -227,10 +268,92 @@ function recordTimeCard(json) {
         json.type === 'clock_in' ? '出勤' : '退勤',
         json.withGuest ? 'あり' : '-',
         timeStr,
-        json.type // clock_in or clock_out
+        json.type, // clock_in or clock_out
+        id // ID
     ]);
     
     return { status: 'success', message: 'Recorded' };
+}
+
+/**
+ * 追加: Update TimeCard Log
+ */
+function updateTimeCard(id, data) {
+    if (!id) throw new Error('ID is required');
+    const doc = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = doc.getSheetByName(TIMECARD_SHEET_NAME);
+    if (!sheet) throw new Error('TimeCard sheet not found');
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error('Record not found');
+
+    // ID列(G/7)を検索
+    const ids = sheet.getRange(2, 7, lastRow - 1, 1).getValues().flat();
+    const rowIndex = ids.indexOf(id); // 0-based index in data array
+
+    if (rowIndex === -1) throw new Error('Record not found: ' + id);
+    
+    const targetRow = rowIndex + 2; // +2 for header and 1-based index
+
+    // data: { time: "HH:mm", withGuest: boolean/string }
+    // A:日時, B:名前, C:種別, D:同伴, E:打刻時間, F:raw_type, G:ID
+    
+    if (data.time) {
+        // 打刻時間(E列)を更新
+        // 日時(A列)も連動して更新する必要があるが、日付部分は変更しない方針か、
+        // あるいは time が "yyyy-MM-dd HH:mm" で来るかによる。
+        // 今回はシンプルに E列(表示用時間) を更新し、A列の日時オブジェクトの時間部分も更新する。
+        
+        // まず現在の日時オブジェクトを取得
+        const currentDateVal = sheet.getRange(targetRow, 1).getValue();
+        let newDate = new Date(currentDateVal);
+        
+        // 時間をパース (HH:mm)
+        const parts = data.time.split(':');
+        if (parts.length === 2) {
+            newDate.setHours(parseInt(parts[0], 10));
+            newDate.setMinutes(parseInt(parts[1], 10));
+            
+            // A列更新
+            const newDateStr = Utilities.formatDate(newDate, 'Asia/Tokyo', 'yyyy/MM/dd HH:mm:ss');
+            sheet.getRange(targetRow, 1).setValue(newDateStr);
+            
+            // E列更新
+            sheet.getRange(targetRow, 5).setValue(data.time);
+        }
+    }
+
+    if (data.withGuest !== undefined) {
+        // D列(同伴)を更新
+        const val = (data.withGuest === true || data.withGuest === 'true' || data.withGuest === 'あり') ? 'あり' : '-';
+        sheet.getRange(targetRow, 4).setValue(val);
+    }
+    
+    return { status: 'success', message: 'Updated' };
+}
+
+/**
+ * 追加: Delete TimeCard Log
+ */
+function deleteTimeCard(id) {
+    if (!id) throw new Error('ID is required');
+    const doc = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = doc.getSheetByName(TIMECARD_SHEET_NAME);
+    if (!sheet) throw new Error('TimeCard sheet not found');
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error('Record not found');
+
+    // ID列(G/7)を検索
+    const ids = sheet.getRange(2, 7, lastRow - 1, 1).getValues().flat();
+    const rowIndex = ids.indexOf(id);
+
+    if (rowIndex === -1) throw new Error('Record not found: ' + id);
+    
+    const targetRow = rowIndex + 2;
+    sheet.deleteRow(targetRow);
+    
+    return { status: 'success', message: 'Deleted' };
 }
 
 /**

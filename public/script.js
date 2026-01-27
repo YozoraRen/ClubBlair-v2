@@ -798,8 +798,11 @@ function renderTimeCardHistory() {
                         pairs.push({
                             name: castName,
                             in_time: currentIn.time,
+                            in_id: currentIn.id, // ID追加
                             out_time: null,
-                            with_guest: currentIn.with_guest
+                            out_id: null,
+                            with_guest: currentIn.with_guest,
+                            date: currentIn.date // date追加
                         });
                     }
                     currentIn = log;
@@ -809,8 +812,11 @@ function renderTimeCardHistory() {
                         pairs.push({
                             name: castName,
                             in_time: currentIn.time,
+                            in_id: currentIn.id, // ID追加
                             out_time: log.time,
-                            with_guest: currentIn.with_guest // Use clock_in guest info
+                            out_id: log.id, // ID追加
+                            with_guest: currentIn.with_guest, // Use clock_in guest info
+                            date: currentIn.date
                         });
                         currentIn = null;
                     } else {
@@ -818,8 +824,11 @@ function renderTimeCardHistory() {
                         pairs.push({
                             name: castName,
                             in_time: null,
+                            in_id: null,
                             out_time: log.time,
-                            with_guest: log.with_guest
+                            out_id: log.id, // ID追加
+                            with_guest: log.with_guest,
+                            date: log.date
                         });
                     }
                 }
@@ -830,8 +839,11 @@ function renderTimeCardHistory() {
                 pairs.push({
                     name: castName,
                     in_time: currentIn.time,
+                    in_id: currentIn.id, // ID追加
                     out_time: null,
-                    with_guest: currentIn.with_guest
+                    out_id: null,
+                    with_guest: currentIn.with_guest,
+                    date: currentIn.date
                 });
             }
             
@@ -869,15 +881,28 @@ function renderTimeCardHistory() {
                 timeDisplay = `<span style="color: #a0a0a0;">(出勤不明)</span> - <span style="color: #5c7cfa;">${record.out_time}</span>`;
             }
 
+            // Encode data for buttons
+            const recordData = JSON.stringify(record).replace(/"/g, '&quot;');
+
             card.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
                     <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; color: var(--text-light); border: 1px solid #3a3f4b;">
                         <i class="ph ph-clock" style="font-size: 20px;"></i>
                     </div>
                     <div style="flex: 1;">
-                        <div style="display: flex; align-items: center;">
-                            <span style="font-weight: 600; font-size: 0.95rem;">${record.name}</span>
-                            ${guestBadge}
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center;">
+                                <span style="font-weight: 600; font-size: 0.95rem;">${record.name}</span>
+                                ${guestBadge}
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn-icon edit" onclick="startTimeCardEdit('${record.in_id || ''}', '${record.out_id || ''}', '${record.in_time || ''}', '${record.out_time || ''}', '${record.with_guest}', '${record.date}', '${record.name}')">
+                                    <i class="ph ph-pencil-simple"></i>
+                                </button>
+                                <button class="btn-icon delete" onclick="handleTimeCardDelete('${record.in_id || ''}', '${record.out_id || ''}')">
+                                    <i class="ph ph-trash"></i>
+                                </button>
+                            </div>
                         </div>
                         <div style="font-size: 0.9rem; color: var(--text-color); margin-top: 4px; font-family: monospace;">
                             ${timeDisplay}
@@ -888,6 +913,176 @@ function renderTimeCardHistory() {
             listEl.appendChild(card);
         });
     });
+}
+
+// TimeCard Edit Logic
+let timeCardEditState = null;
+
+window.startTimeCardEdit = function(inId, outId, inTime, outTime, withGuest, date, name) {
+    const modal = document.getElementById('timecard-edit-modal');
+    const closeBtn = document.getElementById('close-timecard-edit');
+    const form = document.getElementById('timecard-edit-form');
+    
+    // Store state
+    timeCardEditState = { inId, outId, date, name };
+    
+    // Setup Form
+    document.getElementById('timecard-edit-date-display').textContent = `${date} - ${name}`;
+    
+    // Reset inputs
+    const timeInput = document.getElementById('timecard-edit-time');
+    const guestInput = document.getElementById('timecard-edit-with-guest');
+    
+    // Set guest
+    guestInput.checked = (withGuest === 'true' || withGuest === 'あり' || withGuest === true);
+    
+    // Determine which time to edit - default to in_time if exists, else out_time
+    // Since input type="time" only supports one value, we need a way to choose which to edit
+    // For simplicity, let's create two time inputs in the modal dynamically based on availability
+    
+    const container = document.getElementById('timecard-edit-time').parentElement;
+    container.innerHTML = ''; // Clear existing
+    
+    if (inId) {
+        const label = document.createElement('label');
+        label.textContent = '出勤時刻 (HH:mm)';
+        label.style.display = 'block';
+        label.style.marginBottom = '6px';
+        label.style.marginTop = '12px';
+        
+        const input = document.createElement('input');
+        input.type = 'time';
+        input.id = 'edit-in-time';
+        input.value = inTime;
+        input.className = 'settings-input';
+        
+        container.appendChild(label);
+        container.appendChild(input);
+    }
+    
+    if (outId) {
+        const label = document.createElement('label');
+        label.textContent = '退勤時刻 (HH:mm)';
+        label.style.display = 'block';
+        label.style.marginBottom = '6px';
+        label.style.marginTop = '12px';
+        
+        const input = document.createElement('input');
+        input.type = 'time';
+        input.id = 'edit-out-time';
+        input.value = outTime;
+        input.className = 'settings-input';
+        
+        container.appendChild(label);
+        container.appendChild(input);
+    }
+
+    modal.classList.remove('hidden');
+    
+    // Handlers
+    const closeHandler = () => {
+        modal.classList.add('hidden');
+        closeBtn.removeEventListener('click', closeHandler);
+    };
+    closeBtn.addEventListener('click', closeHandler);
+    
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        await handleTimeCardUpdate();
+        modal.classList.add('hidden');
+    };
+};
+
+async function handleTimeCardUpdate() {
+    if (!timeCardEditState) return;
+    
+    const btn = document.getElementById('timecard-edit-submit-btn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.textContent = '更新中...';
+    
+    try {
+        const updates = [];
+        const guestVal = document.getElementById('timecard-edit-with-guest').checked;
+        
+        if (timeCardEditState.inId) {
+            const inTime = document.getElementById('edit-in-time').value;
+            updates.push(updateTimeCardRequest(timeCardEditState.inId, inTime, guestVal));
+        }
+        
+        if (timeCardEditState.outId) {
+            const outTime = document.getElementById('edit-out-time').value;
+            updates.push(updateTimeCardRequest(timeCardEditState.outId, outTime, guestVal));
+        }
+        
+        await Promise.all(updates);
+        showToast('更新しました', 'success');
+        fetchData();
+        
+    } catch (e) {
+        console.error(e);
+        showToast('更新エラー: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+async function updateTimeCardRequest(id, time, withGuest) {
+    if (!id) return;
+    
+    const payload = {
+        action: 'update_timecard',
+        id: id,
+        data: {
+            time: time,
+            withGuest: withGuest
+        }
+    };
+    
+    const response = await fetch(gasUrl, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "text/plain;charset=utf-8" }
+    });
+    
+    const json = await response.json();
+    if (json.status !== 'success') throw new Error(json.message);
+    return json;
+}
+
+window.handleTimeCardDelete = async function(inId, outId) {
+    if (!confirm('この履歴を削除しますか？\n(出勤・退勤の両方が削除されます)')) return;
+    
+    try {
+        const deletions = [];
+        if (inId) deletions.push(deleteTimeCardRequest(inId));
+        if (outId) deletions.push(deleteTimeCardRequest(outId));
+        
+        await Promise.all(deletions);
+        showToast('削除しました', 'success');
+        fetchData();
+    } catch (e) {
+        console.error(e);
+        showToast('削除エラー', 'error');
+    }
+};
+
+async function deleteTimeCardRequest(id) {
+    const payload = {
+        action: 'delete_timecard',
+        id: id
+    };
+    
+    const response = await fetch(gasUrl, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "text/plain;charset=utf-8" }
+    });
+    
+    const json = await response.json();
+    if (json.status !== 'success') throw new Error(json.message);
+    return json;
 }
 
 function renderList() {
