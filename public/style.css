@@ -1023,12 +1023,13 @@ select:focus {
 .nav-item {
   background: none;
   border: none;
-  padding: 8px 4px; /* Reduced padding for 6 items */
+  padding: 8px 2px; /* Minimal padding for 7 items */
   border-radius: 8px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 2px;
   color: var(--text-light);
   transition: var(--transition);
@@ -1039,22 +1040,28 @@ select:focus {
 }
 
 .nav-item i {
-  font-size: 20px; /* Slightly smaller icon */
+  font-size: 20px;
 }
 
 .nav-item span {
-  font-size: 0.6rem; /* Smaller text */
+  font-size: 0.55rem; /* Smaller text for 7 items */
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  letter-spacing: -0.2px;
 }
 
 .nav-item.active {
-  background-color: var(--primary-color);
-  color: #1a1d26;
-  box-shadow: 0 2px 8px rgba(240, 185, 11, 0.3);
+  background-color: rgba(240, 185, 11, 0.1); /* Lighter background */
+  color: var(--primary-color);
+  box-shadow: none; /* Removed shadow for flat look */
+}
+
+/* Home button specific style in nav */
+#nav-home {
+  transform: translateY(-4px); /* Slightly raised */
 }
 
 .nav-item:active:not(.active) {
