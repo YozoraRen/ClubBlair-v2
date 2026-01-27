@@ -1023,27 +1023,32 @@ select:focus {
 .nav-item {
   background: none;
   border: none;
-  padding: 10px 12px;
+  padding: 8px 4px; /* Reduced padding for 6 items */
   border-radius: 8px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   color: var(--text-light);
   transition: var(--transition);
   flex: 1;
   max-width: 80px;
+  min-width: 0; /* Allow shrinking */
   -webkit-tap-highlight-color: transparent;
 }
 
 .nav-item i {
-  font-size: 22px;
+  font-size: 20px; /* Slightly smaller icon */
 }
 
 .nav-item span {
-  font-size: 0.65rem;
+  font-size: 0.6rem; /* Smaller text */
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .nav-item.active {
