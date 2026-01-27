@@ -785,8 +785,15 @@ function renderTimeCardHistory() {
         const dailyRecords = [];
         Object.keys(logsByCast).forEach(castName => {
             const userLogs = logsByCast[castName];
-            // Sort by time (ascending)
-            userLogs.sort((a, b) => a.time.localeCompare(b.time));
+            // Sort by full date (ascending) to ensure correct order
+            userLogs.sort((a, b) => {
+                if (a.date < b.date) return -1;
+                if (a.date > b.date) return 1;
+                // If same time, prioritize clock_in to form pairs
+                if (a.type === 'clock_in' && b.type === 'clock_out') return -1;
+                if (a.type === 'clock_out' && b.type === 'clock_in') return 1;
+                return 0;
+            });
 
             const pairs = [];
             let currentIn = null;

@@ -258,10 +258,11 @@ function recordTimeCard(json) {
     }
 
     const timestamp = new Date();
-    const dateStr = Utilities.formatDate(timestamp, 'Asia/Tokyo', 'yyyy/MM/dd HH:mm:ss');
+    const dateStr = Utilities.formatDate(timestamp, 'Asia/Tokyo', 'yyyy-MM-dd HH:mm:ss');
     const timeStr = Utilities.formatDate(timestamp, 'Asia/Tokyo', 'HH:mm');
     const id = Utilities.getUuid(); // ID生成
     
+    // G列(7)のIDを追加
     sheet.appendRow([
         dateStr,
         json.name,
@@ -315,7 +316,7 @@ function updateTimeCard(id, data) {
             newDate.setMinutes(parseInt(parts[1], 10));
             
             // A列更新
-            const newDateStr = Utilities.formatDate(newDate, 'Asia/Tokyo', 'yyyy/MM/dd HH:mm:ss');
+            const newDateStr = Utilities.formatDate(newDate, 'Asia/Tokyo', 'yyyy-MM-dd HH:mm:ss');
             sheet.getRange(targetRow, 1).setValue(newDateStr);
             
             // E列更新
