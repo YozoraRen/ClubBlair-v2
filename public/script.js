@@ -1281,7 +1281,12 @@ function updateCastOptions() {
 }
 
 function renderLoading() {
-    dataListEl.innerHTML = '<div class="empty-state"><div class="loading-spinner" style="border-top-color: var(--primary-color); border: 2px solid #eee; width: 30px; height: 30px; margin: 0 auto;"></div><br>読み込み中...</div>';
+    const loadingHTML = '<div class="empty-state"><div class="loading-spinner" style="border-top-color: var(--primary-color); border: 2px solid #eee; width: 30px; height: 30px; margin: 0 auto;"></div><br>読み込み中...</div>';
+    
+    if (dataListEl) dataListEl.innerHTML = loadingHTML;
+    
+    const timecardList = document.getElementById('timecard-history-list');
+    if (timecardList) timecardList.innerHTML = loadingHTML;
 }
 
 function renderError(msg) {
