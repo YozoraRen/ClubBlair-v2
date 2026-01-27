@@ -284,6 +284,15 @@ function setupEventListeners() {
     if (filterStart) filterStart.addEventListener('change', renderList);
     if (filterEnd) filterEnd.addEventListener('change', renderList);
 
+    // TimeCard History Filter
+    const timecardFilterStart = document.getElementById('timecard-filter-start');
+    const timecardFilterEnd = document.getElementById('timecard-filter-end');
+    const timecardFilterName = document.getElementById('timecard-filter-name');
+
+    if (timecardFilterStart) timecardFilterStart.addEventListener('change', renderTimeCardHistory);
+    if (timecardFilterEnd) timecardFilterEnd.addEventListener('change', renderTimeCardHistory);
+    if (timecardFilterName) timecardFilterName.addEventListener('change', renderTimeCardHistory);
+
     setupNavigation();
 }
 
@@ -745,8 +754,42 @@ function renderTimeCardHistory() {
 
     listEl.innerHTML = '';
 
-    if (!timecardLogs || timecardLogs.length === 0) {
+    // Filter logic
+    let displayLogs = timecardLogs;
+    const startDateVal = document.getElementById('timecard-filter-start')?.value;
+    const endDateVal = document.getElementById('timecard-filter-end')?.value;
+    const nameVal = document.getElementById('timecard-filter-name')?.value;
+
+    if (startDateVal || endDateVal || nameVal) {
+        displayLogs = timecardLogs.filter(log => {
+            let matchesDate = true;
+            let matchesName = true;
+
+            // Date filtering
+            if (startDateVal || endDateVal) {
+                try {
+                    // log.date is formatted as "yyyy-MM-dd HH:mm:ss" in GAS
+                    const logDate = log.date.split(' ')[0]; // Extract YYYY-MM-DD
+                    
+                    if (startDateVal && logDate < startDateVal) matchesDate = false;
+                    if (endDateVal && logDate > endDateVal) matchesDate = false;
+                } catch (e) {
+                    matchesDate = false;
+                }
+            }
+
+            // Name filtering
+            if (nameVal && log.name !== nameVal) {
+                matchesName = false;
+            }
+
+            return matchesDate && matchesName;
+        });
+    }
+
+    if (!displayLogs || displayLogs.length === 0) {
         listEl.innerHTML = '<div class="empty-state">履歴がありません</div>';
+        updateTimeCardTotal(0); // Reset total
         return;
     }
 
@@ -754,7 +797,7 @@ function renderTimeCardHistory() {
     const grouped = {};
     const dateKeys = [];
 
-    timecardLogs.forEach(log => {
+    displayLogs.forEach(log => {
         let dateStr = '不明な日付';
         try {
             // log.date format depends on GAS: 'yyyy/MM/dd HH:mm:ss'
@@ -770,6 +813,13 @@ function renderTimeCardHistory() {
         }
         grouped[dateStr].push(log);
     });
+
+    // Sort date keys (descending or ascending? typically descending for history)
+    // The logs are already reversed (newest first) from GAS, so dateKeys should follow that natural order
+    // But let's ensure order just in case
+    dateKeys.sort().reverse(); 
+
+    let totalWorkDays = 0; // Total days count
 
     dateKeys.forEach(date => {
         const logsInDate = grouped[date];
@@ -811,11 +861,11 @@ function renderTimeCardHistory() {
                         pairs.push({
                             name: castName,
                             in_time: currentIn.time,
-                            in_id: currentIn.id, // ID追加
+                            in_id: currentIn.id,
                             out_time: null,
                             out_id: null,
                             with_guest: currentIn.with_guest,
-                            date: currentIn.date // date追加
+                            date: currentIn.date
                         });
                     }
                     currentIn = log;
@@ -825,10 +875,10 @@ function renderTimeCardHistory() {
                         pairs.push({
                             name: castName,
                             in_time: currentIn.time,
-                            in_id: currentIn.id, // ID追加
+                            in_id: currentIn.id,
                             out_time: log.time,
-                            out_id: log.id, // ID追加
-                            with_guest: currentIn.with_guest, // Use clock_in guest info
+                            out_id: log.id,
+                            with_guest: currentIn.with_guest,
                             date: currentIn.date
                         });
                         currentIn = null;
@@ -839,7 +889,7 @@ function renderTimeCardHistory() {
                             in_time: null,
                             in_id: null,
                             out_time: log.time,
-                            out_id: log.id, // ID追加
+                            out_id: log.id,
                             with_guest: log.with_guest,
                             date: log.date
                         });
@@ -852,7 +902,7 @@ function renderTimeCardHistory() {
                 pairs.push({
                     name: castName,
                     in_time: currentIn.time,
-                    in_id: currentIn.id, // ID追加
+                    in_id: currentIn.id,
                     out_time: null,
                     out_id: null,
                     with_guest: currentIn.with_guest,
@@ -862,6 +912,9 @@ function renderTimeCardHistory() {
             
             dailyRecords.push(...pairs);
         });
+
+        // Count total records (days)
+        totalWorkDays += dailyRecords.length;
 
         // Sort records by time
         dailyRecords.sort((a, b) => {
@@ -926,6 +979,23 @@ function renderTimeCardHistory() {
             listEl.appendChild(card);
         });
     });
+
+    // Update total count
+    updateTimeCardTotal(totalWorkDays);
+}
+
+function updateTimeCardTotal(count) {
+    const container = document.getElementById('timecard-total-container');
+    const value = document.getElementById('timecard-total-days');
+    
+    if (container && value) {
+        if (count > 0) {
+            container.classList.remove('hidden');
+            value.textContent = `${count}日`;
+        } else {
+            container.classList.add('hidden');
+        }
+    }
 }
 
 // TimeCard Edit Logic
@@ -1284,6 +1354,21 @@ function updateCastOptions() {
         }
     });
 
+    // Also update TimeCard History Name Filter
+    const timecardFilterName = document.getElementById('timecard-filter-name');
+    if (timecardFilterName) {
+        const currentVal = timecardFilterName.value;
+        timecardFilterName.innerHTML = '<option value="">全員</option>';
+        casts.forEach(cast => {
+            const option = document.createElement('option');
+            option.value = cast;
+            option.textContent = cast;
+            timecardFilterName.appendChild(option);
+        });
+        if (casts.includes(currentVal)) {
+            timecardFilterName.value = currentVal;
+        }
+    }
 }
 
 function renderLoading() {

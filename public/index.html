@@ -281,10 +281,17 @@
                                 <span>更新</span>
                             </button>
                         </div>
-                        <div class="filter-row" style="margin-top: 8px;">
+                        <div class="filter-row" style="margin-top: 8px; flex-wrap: wrap;">
                             <input type="date" id="timecard-filter-start" placeholder="開始日">
                             <span>~</span>
                             <input type="date" id="timecard-filter-end" placeholder="終了日">
+                            <select id="timecard-filter-name" class="cast-select" style="min-width: 120px; flex: 1;">
+                                <option value="">全員</option>
+                            </select>
+                        </div>
+                        <div id="timecard-total-container" class="filtered-sum-box hidden">
+                            <span class="label">期間出勤日数</span>
+                            <span class="value" id="timecard-total-days">0日</span>
                         </div>
                     </div>
                     <div id="timecard-history-list" class="data-list">
