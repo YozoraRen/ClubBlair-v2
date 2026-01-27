@@ -866,3 +866,43 @@ select:focus {
     font-size: 0.95rem;
   }
 }
+/* Force colors override */
+.color-1 {
+  background-color: #f0b90b !important;
+  background: linear-gradient(135deg, #ffc107 0%, #f0b90b 100%) !important;
+}
+
+.color-2 {
+  background-color: #40c057 !important;
+  background: linear-gradient(135deg, #51cf66 0%, #40c057 100%) !important;
+}
+
+.color-3 {
+  background-color: #ff6b6b !important;
+  background: linear-gradient(135deg, #ff8787 0%, #ff6b6b 100%) !important;
+}
+
+.color-4 {
+  background-color: #5c7cfa !important;
+  background: linear-gradient(135deg, #748ffc 0%, #5c7cfa 100%) !important;
+}
+
+.color-5 {
+  background-color: #c2255c !important;
+  background: linear-gradient(135deg, #d63384 0%, #c2255c 100%) !important;
+}
+
+.btn-timecard.in {
+  background-color: #40c057 !important;
+  background: linear-gradient(135deg, #51cf66 0%, #40c057 100%) !important;
+}
+
+.btn-timecard.out {
+  background-color: #5c7cfa !important;
+  background: linear-gradient(135deg, #748ffc 0%, #5c7cfa 100%) !important;
+}
+
+.nav-item.active {
+  background-color: #f0b90b !important;
+  color: #1a1d26 !important;
+}
