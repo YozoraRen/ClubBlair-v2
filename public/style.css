@@ -804,6 +804,10 @@ select:focus {
   background: linear-gradient(135deg, #748ffc 0%, #5c7cfa 100%);
 }
 
+.color-5 {
+  background: linear-gradient(135deg, #d63384 0%, #c2255c 100%);
+}
+
 /* Back Button */
 .btn-back {
   background: none;
@@ -1145,6 +1149,171 @@ select:focus {
 .settings-list .empty-state {
   padding: 24px 16px;
   font-size: 0.85rem;
+}
+
+/* TimeCard Specific Styles */
+.timecard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.timecard-camera-box {
+  width: 100%;
+  aspect-ratio: 4/5;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+#timecard-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera-overlay {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+#current-time-display {
+  background: rgba(0,0,0,0.6);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.timecard-options {
+  background: var(--card-bg);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #3a3f4b;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding-left: 32px;
+  cursor: pointer;
+  font-size: 16px;
+  user-select: none;
+}
+
+.checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  height: 22px;
+  width: 22px;
+  background-color: #3a3f4b;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.checkbox-container:hover input ~ .checkmark {
+  background-color: #4b5563;
+}
+
+.checkbox-container input:checked ~ .checkmark {
+  background-color: var(--primary-color);
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox-container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.checkbox-container .checkmark:after {
+  left: 8px;
+  top: 4px;
+  width: 5px;
+  height: 10px;
+  border: solid #1a1d26;
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg);
+}
+
+.label-text {
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.timecard-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.btn-timecard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+}
+
+.btn-timecard i {
+  font-size: 32px;
+}
+
+.btn-timecard span {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.btn-timecard.in {
+  background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+  box-shadow: 0 4px 12px rgba(81, 207, 102, 0.3);
+}
+
+.btn-timecard.out {
+  background: linear-gradient(135deg, #748ffc 0%, #5c7cfa 100%);
+  box-shadow: 0 4px 12px rgba(92, 124, 250, 0.3);
+}
+
+.btn-timecard:active {
+  transform: scale(0.96);
+  opacity: 0.9;
+}
+
+.btn-timecard:disabled {
+  background: #3a3f4b;
+  box-shadow: none;
+  color: #a0a0a0;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 /* Larger screens */

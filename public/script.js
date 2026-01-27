@@ -19,14 +19,170 @@ const dataListEl = document.getElementById('data-list');
 const toastContainer = document.getElementById('toast-container');
 
 // Settings management
-let gasUrl = 'https://script.google.com/macros/s/AKfycbyAQjv6o749gS_PmBsUsxPv5Nun4KgC86GSteL4VLonSMBrFM-x_rgKK9JGtPSsI53y0w/exec';
-// const CONFIG_KEY = 'slip_app_gas_url';
-// let gasUrl = localStorage.getItem(CONFIG_KEY) || '';
+let gasUrl = localStorage.getItem('club_blair_gas_url') || 'https://script.google.com/macros/s/AKfycbyAQjv6o749gS_PmBsUsxPv5Nun4KgC86GSteL4VLonSMBrFM-x_rgKK9JGtPSsI53y0w/exec';
+
+// TimeCard Logic
+class TimeCardManager {
+    constructor() {
+        this.video = document.getElementById('timecard-video');
+        this.castSelect = document.getElementById('timecard-cast');
+        this.btnIn = document.getElementById('btn-clock-in');
+        this.btnOut = document.getElementById('btn-clock-out');
+        this.checkboxGuest = document.getElementById('with-guest');
+        this.stream = null;
+        this.timeInterval = null;
+
+        this.setupListeners();
+        this.startTimeUpdate();
+    }
+
+    setupListeners() {
+        // Cast selection enables/disables buttons
+        this.castSelect.addEventListener('change', () => {
+            const hasValue = !!this.castSelect.value;
+            this.btnIn.disabled = !hasValue;
+            this.btnOut.disabled = !hasValue;
+        });
+
+        // Button Actions
+        this.btnIn.addEventListener('click', () => this.handleClockInOut('clock_in'));
+        this.btnOut.addEventListener('click', () => this.handleClockInOut('clock_out'));
+    }
+
+    async startCamera() {
+        if (this.stream) return;
+
+        try {
+            const constraints = {
+                video: {
+                    facingMode: 'user', // Front camera
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                },
+                audio: false
+            };
+
+            this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+            this.video.srcObject = this.stream;
+        } catch (err) {
+            console.error('Camera Error:', err);
+            showToast('カメラの起動に失敗しました', 'error');
+        }
+    }
+
+    stopCamera() {
+        if (this.stream) {
+            this.stream.getTracks().forEach(track => track.stop());
+            this.stream = null;
+            this.video.srcObject = null;
+        }
+    }
+
+    startTimeUpdate() {
+        const display = document.getElementById('current-time-display');
+        const update = () => {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            if(display) display.textContent = `${hours}:${minutes}`;
+        };
+        update(); // Initial
+        this.timeInterval = setInterval(update, 1000);
+    }
+
+    async handleClockInOut(type) {
+        if (!gasUrl) {
+            showToast('GASのURLが設定されていません', 'error');
+            return;
+        }
+
+        const name = this.castSelect.value;
+        if (!name) return;
+
+        const withGuest = this.checkboxGuest.checked;
+        const typeLabel = type === 'clock_in' ? '出勤' : '退勤';
+
+        // Disable buttons
+        this.btnIn.disabled = true;
+        this.btnOut.disabled = true;
+
+        showToast(`${typeLabel}処理中...`, 'default');
+
+        try {
+            const payload = {
+                name: name,
+                type: type,
+                withGuest: withGuest,
+                action: 'timecard' // Tag for GAS to differentiate if needed
+            };
+            
+            // Note: If reusing same GAS endpoint, ensure it handles this payload structure
+            // Or use a separate "doPost" logic on GAS side.
+            // Our provided GAS script handles {name, type, withGuest} at root level.
+            
+            const response = await fetch(gasUrl, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+                headers: { "Content-Type": "text/plain;charset=utf-8" }
+            });
+
+            const json = await response.json();
+
+            if (json.status === 'success' || json.message === 'Recorded') {
+                showToast(`${name}さん、${typeLabel}完了しました`, 'success');
+                this.castSelect.value = '';
+                this.checkboxGuest.checked = false;
+                this.btnIn.disabled = true;
+                this.btnOut.disabled = true;
+                
+                // Return to home after delay
+                setTimeout(() => {
+                    navigateTo('view-home');
+                }, 1500);
+            } else {
+                throw new Error(json.message || 'Unknown error');
+            }
+        } catch (e) {
+            console.error(e);
+            showToast('送信に失敗しました', 'error');
+            // Re-enable buttons
+            this.btnIn.disabled = false;
+            this.btnOut.disabled = false;
+        }
+    }
+}
+
+let timeCardManager = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     // Set today's date
     document.getElementById('date').valueAsDate = new Date();
+
+    // Init TimeCard Manager
+    timeCardManager = new TimeCardManager();
+
+    // Load Saved GAS URL to input if exists
+    const gasInput = document.getElementById('gas-url');
+    if (gasInput) {
+        gasInput.value = gasUrl;
+    }
+
+    // Save GAS URL Listener
+    const saveGasBtn = document.getElementById('save-gas-url');
+    if (saveGasBtn) {
+        saveGasBtn.addEventListener('click', () => {
+            const val = document.getElementById('gas-url').value.trim();
+            if (val) {
+                gasUrl = val;
+                localStorage.setItem('club_blair_gas_url', val);
+                showToast('GAS URLを保存しました', 'success');
+                fetchData(); // Try to reload data
+            } else {
+                showToast('URLを入力してください', 'error');
+            }
+        });
+    }
 
     fetchData();
 
@@ -125,6 +281,13 @@ window.navigateTo = function (targetId, mode = null) {
             listEl.dataset.mode = 'history';
         }
         renderList();
+    }
+
+    // TimeCard View Camera Logic
+    if (targetId === 'view-timecard') {
+        if (timeCardManager) timeCardManager.startCamera();
+    } else {
+        if (timeCardManager) timeCardManager.stopCamera();
     }
 };
 

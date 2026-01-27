@@ -46,6 +46,12 @@
                         </div>
                         <span>伝票入力</span>
                     </button>
+                    <button class="dash-card" onclick="navigateTo('view-timecard')">
+                        <div class="dash-icon-bg color-5">
+                            <i class="ph ph-clock-user"></i>
+                        </div>
+                        <span>タイムカード</span>
+                    </button>
                     <button class="dash-card" onclick="navigateTo('view-data', 'sales')">
                         <div class="dash-icon-bg color-2">
                             <i class="ph ph-chart-line-up"></i>
@@ -190,6 +196,57 @@
                 </div>
             </section>
 
+            <!-- View: TimeCard -->
+            <section id="view-timecard" class="view-section" style="display: none;">
+                <div class="glass-panel">
+                    <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                        <button class="btn-back" onclick="navigateTo('view-home')">
+                            <i class="ph ph-caret-left"></i> 戻る
+                        </button>
+                        <h2 style="margin-left: 8px; font-size: 1.2rem;">タイムカード</h2>
+                    </div>
+
+                    <div class="timecard-container">
+                        <!-- Camera Preview -->
+                        <div class="timecard-camera-box">
+                            <video id="timecard-video" autoplay playsinline muted></video>
+                            <div class="camera-overlay">
+                                <span id="current-time-display">00:00</span>
+                            </div>
+                        </div>
+
+                        <!-- Cast Selection -->
+                        <div class="form-group" style="margin-top: 16px;">
+                            <label for="timecard-cast">名前を選択</label>
+                            <select id="timecard-cast" class="cast-select">
+                                <option value="">選択してください</option>
+                            </select>
+                        </div>
+
+                        <!-- Options -->
+                        <div class="timecard-options">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="with-guest">
+                                <span class="checkmark"></span>
+                                <span class="label-text">同伴あり</span>
+                            </label>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="timecard-actions">
+                            <button id="btn-clock-in" class="btn-timecard in" disabled>
+                                <i class="ph ph-sun-horizon"></i>
+                                <span>出勤</span>
+                            </button>
+                            <button id="btn-clock-out" class="btn-timecard out" disabled>
+                                <i class="ph ph-moon-stars"></i>
+                                <span>退勤</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- View: Sales & History (Shared Container, toggled logic) -->
             <section id="view-data" class="view-section" style="display: none;">
                 <div class="glass-panel">
@@ -246,6 +303,13 @@
 
                         <!-- Add New Cast -->
                         <div class="settings-card-body">
+                            <!-- GAS URL Setting -->
+                            <div class="settings-section">
+                                <label class="settings-label" for="gas-url">GAS WebアプリURL (タイムカード連携用)</label>
+                                <input type="text" id="gas-url" class="settings-input" placeholder="https://script.google.com/macros/s/..." style="font-size: 0.8rem;">
+                                <button id="save-gas-url" class="btn-secondary" style="width: 100%; margin-top: 8px;">保存</button>
+                            </div>
+
                             <div class="add-cast-section">
                                 <label for="new-cast-name">新しいキャストを追加</label>
                                 <div class="add-cast-input-group">
