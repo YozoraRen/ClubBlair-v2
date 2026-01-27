@@ -492,8 +492,10 @@ async function fetchData() {
                     updateCastOptions();
                 }
                 // Update TimeCard Statuses
-                if (json.meta.cast_statuses && timeCardManager) {
-                    timeCardManager.setStatuses(json.meta.cast_statuses);
+                if (timeCardManager) {
+                    // データがない場合でも空オブジェクトを渡して画面を更新（読み込み中を消す）
+                    const statuses = (json.meta && json.meta.cast_statuses) ? json.meta.cast_statuses : {};
+                    timeCardManager.setStatuses(statuses);
                 }
             }
 
