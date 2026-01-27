@@ -335,7 +335,7 @@ window.navigateTo = function (targetId, mode = null) {
             titleEl.textContent = '売上確認';
             listEl.dataset.mode = 'sales';
         } else {
-            titleEl.textContent = '履歴確認';
+            titleEl.textContent = '伝票履歴確認';
             listEl.dataset.mode = 'history';
         }
         renderList();
