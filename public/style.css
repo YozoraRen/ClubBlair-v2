@@ -589,8 +589,7 @@ select:focus {
 
 .timecard-camera-box {
   width: 100%;
-  /* aspect-ratio: 4/5; Remove fixed aspect ratio that might be too tall */
-  height: 300px; /* Fixed height for consistency */
+  height: 300px;
   background: #000;
   border-radius: 12px;
   overflow: hidden;
@@ -699,7 +698,7 @@ select:focus {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  width: 100%; /* Ensure full width */
+  width: 100%;
 }
 
 .btn-timecard {
@@ -714,28 +713,56 @@ select:focus {
   cursor: pointer;
   transition: all 0.2s;
   color: white;
-  width: 100%; /* Force full width in grid cell */
-  min-height: 100px; /* Prevent collapsing */
-  aspect-ratio: 1; /* Keep square-ish shape if possible, or adjust based on content */
+  width: 100%;
+  min-height: 100px;
+  aspect-ratio: 1;
 }
 
 .btn-timecard i {
   font-size: 32px;
-  margin-bottom: 4px; /* Add spacing */
+  margin-bottom: 4px;
 }
 
 .btn-timecard span {
   font-size: 1rem;
   font-weight: 700;
-  white-space: nowrap; /* Prevent wrapping */
+  white-space: nowrap;
+}
+
+/* Colors and Gradients with Fallbacks */
+.color-1 {
+  background-color: #f0b90b;
+  background: linear-gradient(135deg, #ffc107 0%, #f0b90b 100%);
+}
+
+.color-2 {
+  background-color: #40c057;
+  background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+}
+
+.color-3 {
+  background-color: #ff6b6b;
+  background: linear-gradient(135deg, #ff8787 0%, #ff6b6b 100%);
+}
+
+.color-4 {
+  background-color: #5c7cfa;
+  background: linear-gradient(135deg, #748ffc 0%, #5c7cfa 100%);
+}
+
+.color-5 {
+  background-color: #c2255c;
+  background: linear-gradient(135deg, #d63384 0%, #c2255c 100%);
 }
 
 .btn-timecard.in {
+  background-color: #40c057;
   background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
   box-shadow: 0 4px 12px rgba(81, 207, 102, 0.3);
 }
 
 .btn-timecard.out {
+  background-color: #5c7cfa;
   background: linear-gradient(135deg, #748ffc 0%, #5c7cfa 100%);
   box-shadow: 0 4px 12px rgba(92, 124, 250, 0.3);
 }
@@ -819,6 +846,131 @@ select:focus {
   padding: 12px;
   background: rgba(0,0,0,0.1);
   border-radius: 8px;
+}
+
+/* Dashboard Home */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 8px;
+}
+
+.dash-card {
+  background: var(--card-bg);
+  border-radius: 8px;
+  border: 1px solid #3a3f4b;
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: var(--transition);
+  aspect-ratio: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dash-card:active {
+  transform: scale(0.97);
+  border-color: var(--primary-color);
+}
+
+.dash-card span {
+  font-weight: 700;
+  color: var(--text-color);
+  font-size: 0.85rem;
+}
+
+.dash-icon-bg {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 28px;
+}
+
+/* Navigation */
+.bottom-nav {
+  position: fixed;
+  bottom: calc(12px + var(--safe-area-bottom));
+  left: 12px;
+  right: 12px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 8px;
+  display: flex;
+  justify-content: space-around;
+  box-shadow: 0 -4px 16px 0 rgba(0, 0, 0, 0.4);
+  z-index: 50;
+  border: 1px solid #3a3f4b;
+}
+
+.nav-item {
+  background: none;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-light);
+  transition: var(--transition);
+  flex: 1;
+  max-width: 80px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-item i {
+  font-size: 22px;
+}
+
+.nav-item span {
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.nav-item.active {
+  background-color: var(--primary-color);
+  color: #1a1d26;
+  box-shadow: 0 2px 8px rgba(240, 185, 11, 0.3);
+}
+
+.nav-item:active:not(.active) {
+  background: #3a3f4b;
+  color: #ffc107;
+}
+
+/* Utility */
+.hidden {
+  display: none !important;
+}
+
+/* View Handling */
+.view-section {
+  display: block;
+  animation: fadeIn 0.3s ease-out;
+  padding-bottom: calc(80px + var(--safe-area-bottom));
+  width: 100%;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Larger screens */
