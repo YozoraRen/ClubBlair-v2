@@ -766,7 +766,7 @@ function renderTimeCardHistory() {
     });
 
     dateKeys.forEach(date => {
-        const group = grouped[date];
+        const logsInDate = grouped[date];
         
         // Header
         const header = document.createElement('div');
@@ -774,8 +774,79 @@ function renderTimeCardHistory() {
         header.innerHTML = `<span>${date}</span>`;
         listEl.appendChild(header);
 
-        // Items
-        group.forEach(log => {
+        // Group by cast name
+        const logsByCast = {};
+        logsInDate.forEach(log => {
+            if (!logsByCast[log.name]) logsByCast[log.name] = [];
+            logsByCast[log.name].push(log);
+        });
+
+        // Pair logs
+        const dailyRecords = [];
+        Object.keys(logsByCast).forEach(castName => {
+            const userLogs = logsByCast[castName];
+            // Sort by time (ascending)
+            userLogs.sort((a, b) => a.time.localeCompare(b.time));
+
+            const pairs = [];
+            let currentIn = null;
+
+            userLogs.forEach(log => {
+                if (log.type === 'clock_in') {
+                    if (currentIn) {
+                        // Previous clock_in not closed -> treat as clock_in only
+                        pairs.push({
+                            name: castName,
+                            in_time: currentIn.time,
+                            out_time: null,
+                            with_guest: currentIn.with_guest
+                        });
+                    }
+                    currentIn = log;
+                } else if (log.type === 'clock_out') {
+                    if (currentIn) {
+                        // Pair matched
+                        pairs.push({
+                            name: castName,
+                            in_time: currentIn.time,
+                            out_time: log.time,
+                            with_guest: currentIn.with_guest // Use clock_in guest info
+                        });
+                        currentIn = null;
+                    } else {
+                        // Clock_out only
+                        pairs.push({
+                            name: castName,
+                            in_time: null,
+                            out_time: log.time,
+                            with_guest: log.with_guest
+                        });
+                    }
+                }
+            });
+
+            if (currentIn) {
+                // Pending clock_out
+                pairs.push({
+                    name: castName,
+                    in_time: currentIn.time,
+                    out_time: null,
+                    with_guest: currentIn.with_guest
+                });
+            }
+            
+            dailyRecords.push(...pairs);
+        });
+
+        // Sort records by time
+        dailyRecords.sort((a, b) => {
+            const timeA = a.in_time || a.out_time;
+            const timeB = b.in_time || b.out_time;
+            return timeA.localeCompare(timeB);
+        });
+
+        // Render records
+        dailyRecords.forEach(record => {
             const card = document.createElement('div');
             card.className = 'cast-list-item';
             card.style.background = '#1a1d26';
@@ -784,28 +855,32 @@ function renderTimeCardHistory() {
             card.style.marginBottom = '8px';
             card.style.padding = '12px';
 
-            const isClockIn = log.type === 'clock_in';
-            const iconColor = isClockIn ? '#40c057' : '#5c7cfa';
-            const iconClass = isClockIn ? 'ph-sun-horizon' : 'ph-moon-stars';
-            const typeLabel = isClockIn ? '出勤' : '退勤';
-
             let guestBadge = '';
-            if (log.with_guest === 'あり' || log.with_guest === true) {
+            if (record.with_guest === 'あり' || record.with_guest === true) {
                 guestBadge = `<span style="background: rgba(240, 185, 11, 0.15); color: #ffc107; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-left: 8px;">同伴</span>`;
+            }
+
+            let timeDisplay = '';
+            if (record.in_time && record.out_time) {
+                timeDisplay = `<span style="color: #40c057;">${record.in_time}</span> - <span style="color: #5c7cfa;">${record.out_time}</span>`;
+            } else if (record.in_time) {
+                timeDisplay = `<span style="color: #40c057;">${record.in_time}</span> - <span style="color: #a0a0a0;">(退勤未完了)</span>`;
+            } else if (record.out_time) {
+                timeDisplay = `<span style="color: #a0a0a0;">(出勤不明)</span> - <span style="color: #5c7cfa;">${record.out_time}</span>`;
             }
 
             card.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
-                    <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; color: ${iconColor}; border: 1px solid ${iconColor}40;">
-                        <i class="ph ${iconClass}" style="font-size: 20px;"></i>
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; color: var(--text-light); border: 1px solid #3a3f4b;">
+                        <i class="ph ph-clock" style="font-size: 20px;"></i>
                     </div>
                     <div style="flex: 1;">
                         <div style="display: flex; align-items: center;">
-                            <span style="font-weight: 600; font-size: 0.95rem;">${log.name}</span>
+                            <span style="font-weight: 600; font-size: 0.95rem;">${record.name}</span>
                             ${guestBadge}
                         </div>
-                        <div style="font-size: 0.8rem; color: var(--text-light); margin-top: 2px;">
-                            ${log.date} · ${typeLabel}
+                        <div style="font-size: 0.9rem; color: var(--text-color); margin-top: 4px; font-family: monospace;">
+                            ${timeDisplay}
                         </div>
                     </div>
                 </div>
