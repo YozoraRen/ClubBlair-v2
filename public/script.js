@@ -35,6 +35,9 @@ class TimeCardManager {
 
         this.setupListeners();
         this.startTimeUpdate();
+        
+        // Initial render to clear "Loading..." state immediately
+        this.renderActiveCastList();
     }
 
     setStatuses(statuses) {
@@ -49,7 +52,10 @@ class TimeCardManager {
         const listEl = document.getElementById('active-cast-list');
         const countEl = document.getElementById('active-cast-count');
         
-        if (!listEl || !countEl) return;
+        if (!listEl || !countEl) {
+            console.warn('Active cast list elements not found');
+            return;
+        }
         
         // Filter active casts
         const activeCasts = Object.entries(this.castStatuses)
