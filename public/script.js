@@ -242,28 +242,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Init TimeCard Manager
     timeCardManager = new TimeCardManager();
 
-    // Load Saved GAS URL to input if exists
-    const gasInput = document.getElementById('gas-url');
-    if (gasInput) {
-        gasInput.value = gasUrl;
-    }
-
-    // Save GAS URL Listener
-    const saveGasBtn = document.getElementById('save-gas-url');
-    if (saveGasBtn) {
-        saveGasBtn.addEventListener('click', () => {
-            const val = document.getElementById('gas-url').value.trim();
-            if (val) {
-                gasUrl = val;
-                localStorage.setItem('club_blair_gas_url', val);
-                showToast('GAS URLを保存しました', 'success');
-                fetchData(); // Try to reload data
-            } else {
-                showToast('URLを入力してください', 'error');
-            }
-        });
-    }
-
     fetchData();
 
     setupEventListeners();
