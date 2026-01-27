@@ -31,22 +31,60 @@ class TimeCardManager {
         this.checkboxGuest = document.getElementById('with-guest');
         this.stream = null;
         this.timeInterval = null;
+        this.castStatuses = {}; // { "Name": "clock_in" | "clock_out" }
 
         this.setupListeners();
         this.startTimeUpdate();
     }
 
+    setStatuses(statuses) {
+        this.castStatuses = statuses || {};
+        // If a cast is already selected, update buttons immediately
+        this.updateButtons();
+    }
+
     setupListeners() {
-        // Cast selection enables/disables buttons
+        // Cast selection enables/disables buttons based on status
         this.castSelect.addEventListener('change', () => {
-            const hasValue = !!this.castSelect.value;
-            this.btnIn.disabled = !hasValue;
-            this.btnOut.disabled = !hasValue;
+            this.updateButtons();
         });
 
         // Button Actions
         this.btnIn.addEventListener('click', () => this.handleClockInOut('clock_in'));
         this.btnOut.addEventListener('click', () => this.handleClockInOut('clock_out'));
+    }
+
+    updateButtons() {
+        const name = this.castSelect.value;
+        if (!name) {
+            this.btnIn.disabled = true;
+            this.btnOut.disabled = true;
+            this.btnIn.style.opacity = '0.5';
+            this.btnOut.style.opacity = '0.5';
+            return;
+        }
+
+        const status = this.castStatuses[name];
+        
+        // Logic:
+        // If status is 'clock_in' (already working) -> In: Disabled, Out: Enabled
+        // If status is 'clock_out' or undefined (not working) -> In: Enabled, Out: Disabled
+        
+        if (status === 'clock_in') {
+            // Already Clocked In
+            this.btnIn.disabled = true;
+            this.btnIn.style.opacity = '0.5';
+            
+            this.btnOut.disabled = false;
+            this.btnOut.style.opacity = '1';
+        } else {
+            // Clocked Out or No Record
+            this.btnIn.disabled = false;
+            this.btnIn.style.opacity = '1';
+            
+            this.btnOut.disabled = true; // Cannot clock out if not clocked in
+            this.btnOut.style.opacity = '0.5';
+        }
     }
 
     async startCamera() {
@@ -130,10 +168,13 @@ class TimeCardManager {
 
             if (json.status === 'success' || json.message === 'Recorded') {
                 showToast(`${name}さん、${typeLabel}完了しました`, 'success');
+                
+                // Update local status
+                this.castStatuses[name] = type;
+                
                 this.castSelect.value = '';
                 this.checkboxGuest.checked = false;
-                this.btnIn.disabled = true;
-                this.btnOut.disabled = true;
+                this.updateButtons(); // Reset buttons
                 
                 // Return to home after delay
                 setTimeout(() => {
@@ -412,9 +453,15 @@ async function fetchData() {
 
         if (json.status === 'success') {
             entries = json.data.reverse(); // Show newest first
-            if (json.meta && json.meta.casts) {
-                casts = json.meta.casts;
-                updateCastOptions();
+            if (json.meta) {
+                if (json.meta.casts) {
+                    casts = json.meta.casts;
+                    updateCastOptions();
+                }
+                // Update TimeCard Statuses
+                if (json.meta.cast_statuses && timeCardManager) {
+                    timeCardManager.setStatuses(json.meta.cast_statuses);
+                }
             }
 
             // Debug feedback
