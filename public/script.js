@@ -41,6 +41,38 @@ class TimeCardManager {
         this.castStatuses = statuses || {};
         // If a cast is already selected, update buttons immediately
         this.updateButtons();
+        // Update list view
+        this.renderActiveCastList();
+    }
+
+    renderActiveCastList() {
+        const listEl = document.getElementById('active-cast-list');
+        const countEl = document.getElementById('active-cast-count');
+        
+        if (!listEl || !countEl) return;
+        
+        // Filter active casts
+        const activeCasts = Object.entries(this.castStatuses)
+            .filter(([_, status]) => status === 'clock_in')
+            .map(([name, _]) => name);
+            
+        countEl.textContent = `${activeCasts.length}名`;
+        
+        if (activeCasts.length === 0) {
+            listEl.innerHTML = '<div class="empty-state-mini">現在出勤中のキャストはいません</div>';
+            return;
+        }
+        
+        listEl.innerHTML = '';
+        activeCasts.forEach(name => {
+            const chip = document.createElement('div');
+            chip.className = 'active-cast-chip';
+            chip.innerHTML = `
+                <span class="status-dot"></span>
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name}</span>
+            `;
+            listEl.appendChild(chip);
+        });
     }
 
     setupListeners() {
@@ -175,6 +207,7 @@ class TimeCardManager {
                 this.castSelect.value = '';
                 this.checkboxGuest.checked = false;
                 this.updateButtons(); // Reset buttons
+                this.renderActiveCastList(); // Update list
                 
                 // Return to home after delay
                 setTimeout(() => {
