@@ -1018,3 +1018,91 @@ select:focus {
     font-size: 0.95rem;
   }
 }
+
+/* --- Missing Styles Recovery --- */
+
+/* Dashboard Icon Colors */
+.color-1 {
+  background-color: #f0b90b;
+  background: linear-gradient(135deg, #ffc107 0%, #f0b90b 100%);
+}
+
+.color-2 {
+  background-color: #40c057;
+  background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+}
+
+.color-3 {
+  background-color: #ff6b6b;
+  background: linear-gradient(135deg, #ff8787 0%, #ff6b6b 100%);
+}
+
+.color-4 {
+  background-color: #5c7cfa;
+  background: linear-gradient(135deg, #748ffc 0%, #5c7cfa 100%);
+}
+
+.color-5 {
+  background-color: #c2255c;
+  background: linear-gradient(135deg, #d63384 0%, #c2255c 100%);
+}
+
+/* TimeCard Button Colors */
+.btn-timecard.in {
+  background-color: #40c057;
+  background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+  box-shadow: 0 4px 12px rgba(81, 207, 102, 0.3);
+}
+
+.btn-timecard.out {
+  background-color: #5c7cfa;
+  background: linear-gradient(135deg, #748ffc 0%, #5c7cfa 100%);
+  box-shadow: 0 4px 12px rgba(92, 124, 250, 0.3);
+}
+
+/* TimeCard Layout Fixes */
+.timecard-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+}
+
+.btn-timecard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+  width: 100%;
+  min-height: 100px;
+  aspect-ratio: 1;
+}
+
+.btn-timecard i {
+  font-size: 32px;
+  margin-bottom: 4px;
+}
+
+.btn-timecard span {
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.timecard-camera-box {
+  width: 100%;
+  height: 300px;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  margin-bottom: 16px;
+}
