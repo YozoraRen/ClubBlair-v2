@@ -589,12 +589,14 @@ select:focus {
 
 .timecard-camera-box {
   width: 100%;
-  aspect-ratio: 4/5;
+  /* aspect-ratio: 4/5; Remove fixed aspect ratio that might be too tall */
+  height: 300px; /* Fixed height for consistency */
   background: #000;
   border-radius: 12px;
   overflow: hidden;
   position: relative;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  margin-bottom: 16px;
 }
 
 #timecard-video {
@@ -697,6 +699,7 @@ select:focus {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+  width: 100%; /* Ensure full width */
 }
 
 .btn-timecard {
@@ -705,21 +708,26 @@ select:focus {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 20px;
+  padding: 16px;
   border: none;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
   color: white;
+  width: 100%; /* Force full width in grid cell */
+  min-height: 100px; /* Prevent collapsing */
+  aspect-ratio: 1; /* Keep square-ish shape if possible, or adjust based on content */
 }
 
 .btn-timecard i {
   font-size: 32px;
+  margin-bottom: 4px; /* Add spacing */
 }
 
 .btn-timecard span {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
+  white-space: nowrap; /* Prevent wrapping */
 }
 
 .btn-timecard.in {
