@@ -5,6 +5,7 @@
 // State
 let entries = [];
 let casts = [];
+let timecardLogs = []; // Added
 let isEditing = false;
 let currentEditId = null;
 
@@ -263,6 +264,12 @@ function setupEventListeners() {
 
     // Refresh
     document.getElementById('refresh-btn').addEventListener('click', fetchData);
+    
+    // Refresh TimeCard History
+    const refreshTimeCardBtn = document.getElementById('refresh-timecard-btn');
+    if (refreshTimeCardBtn) {
+        refreshTimeCardBtn.addEventListener('click', fetchData);
+    }
 
     // Filter
     const filterStart = document.getElementById('filter-start');
@@ -339,6 +346,11 @@ window.navigateTo = function (targetId, mode = null) {
             listEl.dataset.mode = 'history';
         }
         renderList();
+    }
+
+    // Handle TimeCard History View
+    if (targetId === 'view-timecard-history') {
+        renderTimeCardHistory();
     }
 
     // TimeCard View Camera Logic
@@ -483,6 +495,10 @@ async function fetchData() {
                     const statuses = (json.meta && json.meta.cast_statuses) ? json.meta.cast_statuses : {};
                     timeCardManager.setStatuses(statuses);
                 }
+                // Store TimeCard Logs
+                if (json.meta.timecard_logs) {
+                    timecardLogs = json.meta.timecard_logs;
+                }
             }
 
             // Debug feedback
@@ -492,6 +508,7 @@ async function fetchData() {
 
             renderList();
             renderTodayEntries(); // Update today's entries
+            renderTimeCardHistory(); // Update TimeCard History
         } else {
             throw new Error(json.message);
         }
@@ -716,6 +733,88 @@ async function handleDelete(id) {
 
 
 // UI Helpers
+function renderTimeCardHistory() {
+    const listEl = document.getElementById('timecard-history-list');
+    if (!listEl) return;
+
+    listEl.innerHTML = '';
+
+    if (!timecardLogs || timecardLogs.length === 0) {
+        listEl.innerHTML = '<div class="empty-state">履歴がありません</div>';
+        return;
+    }
+
+    // Group logs by date (YYYY/MM/DD)
+    const grouped = {};
+    const dateKeys = [];
+
+    timecardLogs.forEach(log => {
+        let dateStr = '不明な日付';
+        try {
+            // log.date format depends on GAS: 'yyyy/MM/dd HH:mm:ss'
+            const parts = log.date.split(' ');
+            if (parts.length > 0) {
+                dateStr = parts[0];
+            }
+        } catch (e) {}
+
+        if (!grouped[dateStr]) {
+            grouped[dateStr] = [];
+            dateKeys.push(dateStr);
+        }
+        grouped[dateStr].push(log);
+    });
+
+    dateKeys.forEach(date => {
+        const group = grouped[date];
+        
+        // Header
+        const header = document.createElement('div');
+        header.className = 'date-group-header';
+        header.innerHTML = `<span>${date}</span>`;
+        listEl.appendChild(header);
+
+        // Items
+        group.forEach(log => {
+            const card = document.createElement('div');
+            card.className = 'cast-list-item';
+            card.style.background = '#1a1d26';
+            card.style.border = '1px solid #3a3f4b';
+            card.style.borderRadius = '8px';
+            card.style.marginBottom = '8px';
+            card.style.padding = '12px';
+
+            const isClockIn = log.type === 'clock_in';
+            const iconColor = isClockIn ? '#40c057' : '#5c7cfa';
+            const iconClass = isClockIn ? 'ph-sun-horizon' : 'ph-moon-stars';
+            const typeLabel = isClockIn ? '出勤' : '退勤';
+
+            let guestBadge = '';
+            if (log.with_guest === 'あり' || log.with_guest === true) {
+                guestBadge = `<span style="background: rgba(240, 185, 11, 0.15); color: #ffc107; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-left: 8px;">同伴</span>`;
+            }
+
+            card.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; color: ${iconColor}; border: 1px solid ${iconColor}40;">
+                        <i class="ph ${iconClass}" style="font-size: 20px;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center;">
+                            <span style="font-weight: 600; font-size: 0.95rem;">${log.name}</span>
+                            ${guestBadge}
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-light); margin-top: 2px;">
+                            ${log.time} · ${typeLabel}
+                        </div>
+                    </div>
+                </div>
+            `;
+            listEl.appendChild(card);
+        });
+    });
+}
+
 function renderList() {
     dataListEl.innerHTML = '';
 

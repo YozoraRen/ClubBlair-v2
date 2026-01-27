@@ -62,13 +62,15 @@ function doGet(e) {
         const data = getData();
         const casts = getCasts();
         const castStatuses = getCastStatuses(); // 追加: ステータス取得
+        const timeCardLogs = getTimeCardLogs(); // 追加: タイムカード履歴取得
 
         return {
             status: 'success',
             data: data,
             meta: {
                 casts: casts,
-                cast_statuses: castStatuses // 追加
+                cast_statuses: castStatuses, // 追加
+                timecard_logs: timeCardLogs // 追加
             }
         };
     });
@@ -126,6 +128,31 @@ function getCastStatuses() {
         }
     }
     return statuses;
+}
+
+/**
+ * 追加: Get all TimeCard logs
+ */
+function getTimeCardLogs() {
+    const doc = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = doc.getSheetByName(TIMECARD_SHEET_NAME);
+    if (!sheet) return [];
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return [];
+
+    // Read all logs
+    // Columns: 日時, 名前, 種別, 同伴, 打刻時間, raw_type
+    const values = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
+    
+    return values.map(row => ({
+        date: row[0],
+        name: row[1],
+        type_label: row[2], // 出勤/退勤 (表示用)
+        with_guest: row[3], // あり/-
+        time: row[4],
+        type: row[5] // clock_in/clock_out
+    })).reverse(); // 新しい順
 }
 
 /**

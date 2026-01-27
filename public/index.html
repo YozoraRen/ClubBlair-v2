@@ -52,6 +52,12 @@
                         </div>
                         <span>タイムカード</span>
                     </button>
+                    <button class="dash-card" onclick="navigateTo('view-timecard-history')">
+                        <div class="dash-icon-bg color-4">
+                            <i class="ph ph-clock-counter-clockwise"></i>
+                        </div>
+                        <span>タイムカード<br>履歴確認</span>
+                    </button>
                     <button class="dash-card" onclick="navigateTo('view-data', 'sales')">
                         <div class="dash-icon-bg color-2">
                             <i class="ph ph-chart-line-up"></i>
@@ -65,7 +71,7 @@
                         <span>伝票履歴確認</span>
                     </button>
                     <button class="dash-card" onclick="navigateTo('view-settings')">
-                        <div class="dash-icon-bg color-4">
+                        <div class="dash-icon-bg color-1">
                             <i class="ph ph-gear"></i>
                         </div>
                         <span>設定</span>
@@ -253,6 +259,33 @@
                             <div id="active-cast-list" class="active-cast-grid">
                                 <div class="empty-state-mini">データなし</div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: TimeCard History -->
+            <section id="view-timecard-history" class="view-section" style="display: none;">
+                <div class="glass-panel">
+                    <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                        <button class="btn-back" onclick="navigateTo('view-home')">
+                            <i class="ph ph-caret-left"></i> 戻る
+                        </button>
+                    </div>
+
+                    <div class="data-view-header">
+                        <div class="data-view-title-row">
+                            <h2 style="font-size: 1.2rem; font-weight: 700; color: var(--text-color);">タイムカード履歴</h2>
+                            <button class="btn-refresh" id="refresh-timecard-btn" title="更新">
+                                <i class="ph ph-arrows-clockwise" style="font-size: 18px;"></i>
+                                <span>更新</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="timecard-history-list" class="data-list">
+                        <!-- TimeCard History Items will be injected here -->
+                        <div class="empty-state">
+                            データを読み込み中...
                         </div>
                     </div>
                 </div>
