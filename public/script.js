@@ -805,7 +805,7 @@ function renderTimeCardHistory() {
                             ${guestBadge}
                         </div>
                         <div style="font-size: 0.8rem; color: var(--text-light); margin-top: 2px;">
-                            ${log.time} · ${typeLabel}
+                            ${log.date} · ${typeLabel}
                         </div>
                     </div>
                 </div>

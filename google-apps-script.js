@@ -145,14 +145,28 @@ function getTimeCardLogs() {
     // Columns: 日時, 名前, 種別, 同伴, 打刻時間, raw_type
     const values = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
     
-    return values.map(row => ({
-        date: row[0],
-        name: row[1],
-        type_label: row[2], // 出勤/退勤 (表示用)
-        with_guest: row[3], // あり/-
-        time: row[4],
-        type: row[5] // clock_in/clock_out
-    })).reverse(); // 新しい順
+    return values.map(row => {
+        // 日時 (row[0]) を文字列にフォーマット
+        let dateStr = row[0];
+        if (row[0] instanceof Date) {
+            dateStr = Utilities.formatDate(row[0], 'Asia/Tokyo', 'yyyy-MM-dd HH:mm:ss');
+        }
+
+        // 打刻時間 (row[4]) も必要ならフォーマット（今回はメインの日時を使うため補助的）
+        let timeStr = row[4];
+        if (row[4] instanceof Date) {
+            timeStr = Utilities.formatDate(row[4], 'Asia/Tokyo', 'HH:mm');
+        }
+
+        return {
+            date: dateStr, // "yyyy-MM-dd HH:mm:ss"
+            name: row[1],
+            type_label: row[2],
+            with_guest: row[3],
+            time: timeStr,
+            type: row[5]
+        };
+    }).reverse(); // 新しい順
 }
 
 /**
