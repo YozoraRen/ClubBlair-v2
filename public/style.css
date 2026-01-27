@@ -1040,17 +1040,11 @@ select:focus {
 }
 
 .nav-item i {
-  font-size: 20px;
+  font-size: 26px;
 }
 
 .nav-item span {
-  font-size: 0.55rem; /* Smaller text for 7 items */
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-  letter-spacing: -0.2px;
+  display: none;
 }
 
 .nav-item.active {
@@ -1061,7 +1055,18 @@ select:focus {
 
 /* Home button specific style in nav */
 #nav-home {
-  transform: translateY(-4px); /* Slightly raised */
+  transform: translateY(-8px); /* More raised */
+  background: var(--card-bg);
+  border: 1px solid #3a3f4b;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  flex: none;
+  box-shadow: 0 -4px 10px rgba(0,0,0,0.2);
+}
+
+#nav-home i {
+  font-size: 32px !important;
 }
 
 .nav-item:active:not(.active) {
