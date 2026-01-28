@@ -293,6 +293,17 @@ function setupEventListeners() {
     if (timecardFilterEnd) timecardFilterEnd.addEventListener('change', renderTimeCardHistory);
     if (timecardFilterName) timecardFilterName.addEventListener('change', renderTimeCardHistory);
 
+    // Restore view
+    const lastView = localStorage.getItem('last_view');
+    const lastMode = localStorage.getItem('last_view_mode');
+    
+    if (lastView && document.getElementById(lastView)) {
+        performNavigation(lastView, lastMode);
+    } else {
+        // Default to home
+        performNavigation('view-home');
+    }
+
     setupNavigation();
     setupPasscodeListeners(); // Added
 }
@@ -489,6 +500,14 @@ window.navigateTo = function (targetId, mode = null) {
 
 function performNavigation(targetId, mode) {
     currentViewId = targetId;
+    
+    // Save state
+    localStorage.setItem('last_view', targetId);
+    if (mode) {
+        localStorage.setItem('last_view_mode', mode);
+    } else {
+        localStorage.removeItem('last_view_mode');
+    }
 
     // Update Views
     document.querySelectorAll('.view-section').forEach(section => {
