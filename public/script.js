@@ -814,9 +814,7 @@ function renderTimeCardHistory() {
         grouped[dateStr].push(log);
     });
 
-    // Sort date keys (descending or ascending? typically descending for history)
-    // The logs are already reversed (newest first) from GAS, so dateKeys should follow that natural order
-    // But let's ensure order just in case
+    // Sort date keys descending (newest first)
     dateKeys.sort().reverse(); 
 
     let totalWorkDays = 0; // Total days count
@@ -841,7 +839,7 @@ function renderTimeCardHistory() {
         const dailyRecords = [];
         Object.keys(logsByCast).forEach(castName => {
             const userLogs = logsByCast[castName];
-            // Sort by full date (ascending) to ensure correct order
+            // Sort by full date (ascending) to ensure correct order within day
             userLogs.sort((a, b) => {
                 if (a.date < b.date) return -1;
                 if (a.date > b.date) return 1;
@@ -1199,6 +1197,13 @@ function renderList() {
             } catch (e) { return false; }
         });
     }
+
+    // Explicitly sort by date descending to ensure correct order
+    displayEntries.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateB - dateA; // Descending
+    });
 
     if (displayEntries.length === 0) {
         dataListEl.innerHTML = '<div class="empty-state">データがありません</div>';
