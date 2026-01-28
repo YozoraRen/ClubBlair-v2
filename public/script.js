@@ -294,6 +294,7 @@ function setupEventListeners() {
     if (timecardFilterName) timecardFilterName.addEventListener('change', renderTimeCardHistory);
 
     setupNavigation();
+    setupPasscodeListeners(); // Added
 }
 
 function setupNavigation() {
@@ -309,8 +310,186 @@ function setupNavigation() {
     });
 }
 
+// Passcode Logic
+const DEFAULT_PASSCODE = '0000';
+let inputPasscode = '';
+let pendingNavigation = null;
+
+// Helper to get stored passcode
+function getPasscode() {
+    return localStorage.getItem('app_passcode') || DEFAULT_PASSCODE;
+}
+
+function showPasscodeModal(callback) {
+    const modal = document.getElementById('passcode-modal');
+    const dots = document.getElementById('passcode-dots');
+    const message = document.getElementById('passcode-message');
+    const closeBtn = document.getElementById('close-passcode');
+    const keys = document.querySelectorAll('.key');
+    
+    // Reset state
+    inputPasscode = '';
+    updateDots();
+    message.textContent = '';
+    pendingNavigation = callback;
+    
+    modal.classList.remove('hidden');
+    
+    // Dot updater
+    function updateDots() {
+        const dotEls = dots.querySelectorAll('.dot');
+        dotEls.forEach((dot, index) => {
+            if (index < inputPasscode.length) {
+                dot.classList.add('active');
+            } else {
+                dot.classList.remove('active', 'error');
+            }
+        });
+    }
+    
+    // Handle Input
+    const handleKey = (key) => {
+        if (key === 'delete') {
+            inputPasscode = inputPasscode.slice(0, -1);
+        } else if (inputPasscode.length < 4) {
+            inputPasscode += key;
+        }
+        
+        updateDots();
+        
+        if (inputPasscode.length === 4) {
+            checkPasscode();
+        }
+    };
+    
+    // Check Logic
+    const checkPasscode = () => {
+        const stored = getPasscode();
+        if (inputPasscode === stored) {
+            // Success
+            modal.classList.add('hidden');
+            if (pendingNavigation) pendingNavigation();
+        } else {
+            // Error
+            message.textContent = 'パスコードが間違っています';
+            const dotEls = dots.querySelectorAll('.dot');
+            dotEls.forEach(d => d.classList.add('error'));
+            
+            // Shake animation reset
+            setTimeout(() => {
+                inputPasscode = '';
+                updateDots();
+                message.textContent = '';
+            }, 500);
+        }
+    };
+    
+    // Event Listeners (Attach once or handle cleanup)
+    // Using a cleaner approach: Clone node to remove old listeners or just add if not present
+    // For simplicity here, we assume this function might be called multiple times, so we need to be careful
+    // But keys are static. Let's add listeners globally or manage them.
+    // Better: Add listeners once in setup, and just use state here.
+    
+    // For the Close button
+    closeBtn.onclick = () => {
+        modal.classList.add('hidden');
+        pendingNavigation = null;
+        inputPasscode = '';
+    };
+}
+
+// Keypad listener setup (Run once)
+function setupPasscodeListeners() {
+    const keys = document.querySelectorAll('.key');
+    keys.forEach(keyBtn => {
+        keyBtn.addEventListener('click', (e) => {
+            // Check if modal is visible
+            if (document.getElementById('passcode-modal').classList.contains('hidden')) return;
+            
+            const key = keyBtn.dataset.key;
+            if (key) {
+                // Logic from showPasscodeModal
+                // We need to access shared state or the logic inside showPasscodeModal needs to be accessible
+                // Let's move the logic out to be shared.
+                handlePasscodeKey(key);
+            }
+        });
+    });
+    
+    // Settings Save
+    const saveBtn = document.getElementById('save-passcode-btn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            const input = document.getElementById('setting-passcode');
+            const val = input.value;
+            if (/^\d{4}$/.test(val)) {
+                localStorage.setItem('app_passcode', val);
+                showToast('パスコードを保存しました', 'success');
+                input.value = '';
+            } else {
+                showToast('4桁の数字を入力してください', 'error');
+            }
+        });
+    }
+}
+
+function handlePasscodeKey(key) {
+    if (key === 'delete') {
+        inputPasscode = inputPasscode.slice(0, -1);
+    } else if (inputPasscode.length < 4) {
+        inputPasscode += key;
+    }
+    
+    // Update UI
+    const dots = document.getElementById('passcode-dots');
+    const dotEls = dots.querySelectorAll('.dot');
+    dotEls.forEach((dot, index) => {
+        if (index < inputPasscode.length) {
+            dot.classList.add('active');
+        } else {
+            dot.classList.remove('active', 'error');
+        }
+    });
+    
+    if (inputPasscode.length === 4) {
+        const stored = getPasscode();
+        if (inputPasscode === stored) {
+            // Success
+            document.getElementById('passcode-modal').classList.add('hidden');
+            if (pendingNavigation) pendingNavigation();
+        } else {
+            // Error
+            const message = document.getElementById('passcode-message');
+            message.textContent = 'パスコードが間違っています';
+            dotEls.forEach(d => d.classList.add('error'));
+            
+            setTimeout(() => {
+                inputPasscode = '';
+                // Update UI Reset
+                dotEls.forEach(d => d.classList.remove('active', 'error'));
+                message.textContent = '';
+            }, 500);
+        }
+    }
+}
+
 // Global navigation helper (exposed for HTML onclick)
+let currentViewId = 'view-home'; // Track current view
+
 window.navigateTo = function (targetId, mode = null) {
+    // Guard: If currently in TimeCard and trying to leave
+    if (currentViewId === 'view-timecard' && targetId !== 'view-timecard') {
+        showPasscodeModal(() => {
+            performNavigation(targetId, mode);
+        });
+        return;
+    }
+    performNavigation(targetId, mode);
+};
+
+function performNavigation(targetId, mode) {
+    currentViewId = targetId;
+
     // Update Views
     document.querySelectorAll('.view-section').forEach(section => {
         section.classList.remove('active');
@@ -374,7 +553,7 @@ window.navigateTo = function (targetId, mode = null) {
     } else {
         if (timeCardManager) timeCardManager.stopCamera();
     }
-};
+}
 
 // --- Cast Management Logic ---
 
@@ -1210,6 +1389,13 @@ function renderList() {
         document.getElementById('filtered-total-container').classList.add('hidden');
         return;
     }
+
+    // Explicitly sort by date descending to ensure correct order
+    displayEntries.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateB - dateA; // Descending
+    });
 
     // Calculate Total for Filtered Range
     const totalSum = displayEntries.reduce((sum, item) => {
